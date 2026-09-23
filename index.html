@@ -9,9 +9,10 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>내부 인재 검색 - 음성 테스트</title>
+  <title>내부 인재 검색 - 연결 테스트</title>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -46,6 +47,7 @@
       border-radius: 16px;
       padding: 28px;
       box-shadow: 0 4px 18px rgba(0,0,0,.03);
+      margin-bottom: 20px;
     }
 
     .title {
@@ -57,6 +59,7 @@
     .help {
       font-size: 12px;
       color: #7d899a;
+      line-height: 1.6;
       margin-bottom: 18px;
     }
 
@@ -86,10 +89,6 @@
       background: #edf3ff;
       cursor: pointer;
       font-size: 22px;
-    }
-
-    #micButton:hover {
-      background: #e1eaff;
     }
 
     #micButton.listening {
@@ -191,118 +190,271 @@
       line-height: 1.6;
     }
 
-    .result {
-      display: none;
-      margin-top: 20px;
-      padding: 16px;
-      border-radius: 10px;
-      background: #eef8f2;
-      border: 1px solid #cce8d7;
+    .api-card {
+      border-left: 5px solid #2454db;
     }
 
-    .result.show {
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 10px;
+      background: #f6f8fb;
+      font-weight: 700;
+    }
+
+    .api-status.loading {
+      color: #2454db;
+    }
+
+    .api-status.success {
+      background: #eef8f2;
+      color: #18794e;
+    }
+
+    .api-status.error {
+      background: #fff2f2;
+      color: #c93434;
+    }
+
+    .data-box {
+      display: none;
+      margin-top: 18px;
+      border: 1px solid #e1e6ee;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .data-box.show {
       display: block;
     }
 
-    .result-title {
-      font-weight: 800;
-      color: #18794e;
-      margin-bottom: 6px;
+    .data-row {
+      display: grid;
+      grid-template-columns: 180px minmax(0,1fr);
+      border-bottom: 1px solid #edf0f4;
     }
 
-    .result-text {
-      font-size: 13px;
-      color: #4d6358;
+    .data-row:last-child {
+      border-bottom: 0;
     }
+
+    .data-label {
+      padding: 13px;
+      background: #f7f9fc;
+      font-size: 12px;
+      font-weight: 800;
+      color: #607086;
+    }
+
+    .data-value {
+      padding: 13px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .retry-button {
+      margin-top: 16px;
+      height: 42px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 8px;
+      background: #2454db;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
   </style>
 </head>
 
+
 <body>
 
-  <div class="page">
+<div class="page">
 
-    <h1>내부 인재 검색</h1>
+  <h1>
+    내부 인재 검색
+  </h1>
 
-    <div class="description">
-      음성 검색 기능 연결 테스트
+  <div class="description">
+    GitHub Pages ↔ Apps Script 연결 테스트
+  </div>
+
+
+  <!-- ============================================
+       API TEST
+  ============================================= -->
+
+  <div class="card api-card">
+
+    <div class="title">
+      ① Apps Script 연결 상태
     </div>
 
-    <div class="card">
+    <div class="help">
+      이 페이지가 열리면 GitHub Pages에서
+      Apps Script API에 직접 접속을 시도합니다.
+    </div>
 
-      <div class="title">
-        자동 검색
-      </div>
+    <div
+      id="apiStatus"
+      class="api-status loading"
+    >
+      ⏳ Apps Script에 연결 중...
+    </div>
 
-      <div class="help">
-        마이크를 누르고 검색 조건을 말씀해주세요.
-      </div>
 
-      <div class="search-row">
+    <div
+      id="dataBox"
+      class="data-box"
+    >
 
-        <input
-          id="query"
-          type="text"
-          placeholder="예: 재직 중이고 총 경력 5년 이상이며 간호사 자격이 있는 사람"
+      <div class="data-row">
+
+        <div class="data-label">
+          전체 인원
+        </div>
+
+        <div
+          id="employeeCount"
+          class="data-value"
         >
-
-        <button
-          id="micButton"
-          type="button"
-          onclick="toggleVoice()"
-          title="음성 검색"
-        >
-          🎤
-        </button>
+          -
+        </div>
 
       </div>
 
-      <div
-        id="voicePanel"
-        class="voice-panel"
+
+      <div class="data-row">
+
+        <div class="data-label">
+          재직 상태
+        </div>
+
+        <div
+          id="employmentStatus"
+          class="data-value"
+        >
+          -
+        </div>
+
+      </div>
+
+
+      <div class="data-row">
+
+        <div class="data-label">
+          BU
+        </div>
+
+        <div
+          id="buList"
+          class="data-value"
+        >
+          -
+        </div>
+
+      </div>
+
+
+      <div class="data-row">
+
+        <div class="data-label">
+          학력
+        </div>
+
+        <div
+          id="educationList"
+          class="data-value"
+        >
+          -
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <button
+      class="retry-button"
+      type="button"
+      onclick="testAppsScriptConnection()"
+    >
+      다시 연결
+    </button>
+
+  </div>
+
+
+
+  <!-- ============================================
+       VOICE TEST
+  ============================================= -->
+
+  <div class="card">
+
+    <div class="title">
+      ② 음성 인식
+    </div>
+
+    <div class="help">
+      기존에 성공한 음성 인식도 그대로 유지되는지 확인합니다.
+    </div>
+
+
+    <div class="search-row">
+
+      <input
+        id="query"
+        type="text"
+        placeholder="예: 재직 중이고 총 경력 5년 이상인 사람"
       >
 
-        <div class="voice-state">
+      <button
+        id="micButton"
+        type="button"
+        onclick="toggleVoice()"
+      >
+        🎤
+      </button>
 
-          <div
-            id="stateDot"
-            class="dot"
-          ></div>
+    </div>
 
-          <span id="stateText">
-            준비
-          </span>
 
-        </div>
+    <div
+      id="voicePanel"
+      class="voice-panel"
+    >
 
-        <div id="voiceMessage">
-        </div>
+      <div class="voice-state">
 
-        <div class="recognized">
+        <div
+          id="stateDot"
+          class="dot"
+        ></div>
 
-          <div class="recognized-label">
-            인식된 음성
-          </div>
-
-          <div id="recognizedText">
-            -
-          </div>
-
-        </div>
+        <span id="stateText">
+          준비
+        </span>
 
       </div>
 
-      <div
-        id="successBox"
-        class="result"
-      >
 
-        <div class="result-title">
-          ✓ 음성 인식 성공
+      <div id="voiceMessage">
+      </div>
+
+
+      <div class="recognized">
+
+        <div class="recognized-label">
+          인식된 음성
         </div>
 
-        <div class="result-text">
-          GitHub Pages에서 마이크와 음성 인식이 정상적으로 작동합니다.
-          다음 단계에서 이 결과를 실제 인재검색에 연결합니다.
+        <div id="recognizedText">
+          -
         </div>
 
       </div>
@@ -311,29 +463,235 @@
 
   </div>
 
+</div>
+
 
 <script>
 
-let recognition = null;
-let listening = false;
 
-let finalTranscript = "";
+/* =========================================================
+   ★ 여기만 수정
+   방금 확인한 Apps Script /exec 주소를 넣는다.
+   ?api=initial 은 붙이지 않는다.
+========================================================= */
+
+const APPS_SCRIPT_URL =
+  'https://script.google.com/a/macros/jnpmedi.com/s/AKfycbwr0MKCqLrjFo9V4sSNYu86htRi6jUOBqO9TP0Qv58FF3WfB9MoRK_dDwc4xXWd65XqGA/exec';
 
 
 /* =========================================================
-   INITIALIZE
+   API CONNECTION TEST
 ========================================================= */
 
 window.addEventListener(
-  "load",
-  initializeSpeechRecognition
+  'load',
+  function() {
+
+    initializeSpeechRecognition();
+
+    testAppsScriptConnection();
+
+  }
 );
+
+
+async function testAppsScriptConnection() {
+
+  const status =
+    document.getElementById(
+      'apiStatus'
+    );
+
+
+  const dataBox =
+    document.getElementById(
+      'dataBox'
+    );
+
+
+  status.className =
+    'api-status loading';
+
+
+  status.textContent =
+    '⏳ Apps Script에 연결 중...';
+
+
+  dataBox.classList.remove(
+    'show'
+  );
+
+
+  if (
+    !APPS_SCRIPT_URL ||
+    APPS_SCRIPT_URL.includes(
+      '여기에_'
+    )
+  ) {
+
+    status.className =
+      'api-status error';
+
+
+    status.textContent =
+      '❌ APPS_SCRIPT_URL을 아직 입력하지 않았습니다.';
+
+
+    return;
+
+  }
+
+
+  try {
+
+    const url =
+
+      APPS_SCRIPT_URL +
+
+      (
+        APPS_SCRIPT_URL.includes('?')
+          ? '&'
+          : '?'
+      )
+
+      +
+
+      'api=initial';
+
+
+    const response =
+
+      await fetch(
+        url,
+        {
+          method: 'GET'
+        }
+      );
+
+
+    if (
+      !response.ok
+    ) {
+
+      throw new Error(
+        'HTTP ' +
+        response.status
+      );
+
+    }
+
+
+    const result =
+      await response.json();
+
+
+    if (
+      !result.success
+    ) {
+
+      throw new Error(
+        result.message ||
+        'API 요청 실패'
+      );
+
+    }
+
+
+    const data =
+      result.data;
+
+
+    status.className =
+      'api-status success';
+
+
+    status.textContent =
+      '✓ GitHub Pages ↔ Apps Script 연결 성공';
+
+
+    document.getElementById(
+      'employeeCount'
+    ).textContent =
+
+      data.employeeCount +
+      '명';
+
+
+    document.getElementById(
+      'employmentStatus'
+    ).textContent =
+
+      (
+        data.employmentStatus ||
+        []
+      ).join(' / ');
+
+
+    document.getElementById(
+      'buList'
+    ).textContent =
+
+      (
+        data.buList ||
+        []
+      ).join(' / ');
+
+
+    document.getElementById(
+      'educationList'
+    ).textContent =
+
+      (
+        data.educationList ||
+        []
+      ).join(' / ');
+
+
+    dataBox.classList.add(
+      'show'
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      error
+    );
+
+
+    status.className =
+      'api-status error';
+
+
+    status.textContent =
+
+      '❌ 외부 연결 실패: ' +
+
+      error.message;
+
+  }
+
+}
+
+
+/* =========================================================
+   SPEECH RECOGNITION
+========================================================= */
+
+let recognition = null;
+
+let listening = false;
+
+let finalTranscript = '';
 
 
 function initializeSpeechRecognition() {
 
   const SpeechRecognition =
+
     window.SpeechRecognition ||
+
     window.webkitSpeechRecognition;
 
 
@@ -341,17 +699,22 @@ function initializeSpeechRecognition() {
 
     showVoicePanel();
 
-    setState(
-      "error",
-      "음성 인식 미지원",
-      "현재 브라우저에서 Speech Recognition 기능을 사용할 수 없습니다."
+
+    setVoiceState(
+      'error',
+      '음성 인식 미지원',
+      '현재 브라우저에서는 음성 인식을 사용할 수 없습니다.'
     );
 
+
     document.getElementById(
-      "micButton"
-    ).disabled = true;
+      'micButton'
+    ).disabled =
+      true;
+
 
     return;
+
   }
 
 
@@ -360,7 +723,7 @@ function initializeSpeechRecognition() {
 
 
   recognition.lang =
-    "ko-KR";
+    'ko-KR';
 
 
   recognition.continuous =
@@ -375,101 +738,74 @@ function initializeSpeechRecognition() {
     1;
 
 
-  /* -------------------------------------------------------
-     START
-  ------------------------------------------------------- */
-
   recognition.onstart =
     function() {
 
-      listening = true;
-
-      finalTranscript = "";
-
-      document.getElementById(
-        "query"
-      ).value = "";
+      listening =
+        true;
 
 
-      document.getElementById(
-        "recognizedText"
-      ).textContent = "-";
+      finalTranscript =
+        '';
 
 
       document.getElementById(
-        "successBox"
-      ).classList.remove(
-        "show"
-      );
+        'query'
+      ).value =
+        '';
+
+
+      document.getElementById(
+        'recognizedText'
+      ).textContent =
+        '-';
 
 
       const button =
+
         document.getElementById(
-          "micButton"
+          'micButton'
         );
 
 
       button.classList.add(
-        "listening"
+        'listening'
       );
 
 
       button.textContent =
-        "⏹️";
+        '⏹️';
 
 
       showVoicePanel();
 
 
-      setState(
-        "listening",
-        "🔴 듣는 중...",
-        "검색 조건을 말씀해주세요."
+      setVoiceState(
+        'listening',
+        '🔴 듣는 중...',
+        '검색 조건을 말씀해주세요.'
       );
 
     };
 
 
-  /* -------------------------------------------------------
-     SOUND DETECTED
-  ------------------------------------------------------- */
-
-  recognition.onsoundstart =
-    function() {
-
-      setState(
-        "listening",
-        "🔴 소리 감지",
-        "음성이 들어오고 있습니다."
-      );
-
-  };
-
-
-  /* -------------------------------------------------------
-     SPEECH DETECTED
-  ------------------------------------------------------- */
-
   recognition.onspeechstart =
     function() {
 
-      setState(
-        "listening",
-        "🎙️ 음성 인식 중...",
-        "계속 말씀해주세요."
+      setVoiceState(
+        'listening',
+        '🎙️ 음성 인식 중...',
+        '계속 말씀해주세요.'
       );
 
-  };
+    };
 
-
-  /* -------------------------------------------------------
-     RESULT
-  ------------------------------------------------------- */
 
   recognition.onresult =
     function(event) {
 
-      let interimTranscript = "";
+      let interimTranscript =
+        '';
 
 
       for (
@@ -479,6 +815,7 @@ function initializeSpeechRecognition() {
       ) {
 
         const transcript =
+
           event.results[i][0]
             .transcript;
 
@@ -502,7 +839,7 @@ function initializeSpeechRecognition() {
       }
 
 
-      const currentTranscript =
+      const text =
 
         (
           finalTranscript +
@@ -511,23 +848,24 @@ function initializeSpeechRecognition() {
 
 
       document.getElementById(
-        "query"
+        'query'
       ).value =
-        currentTranscript;
+        text;
 
 
       document.getElementById(
-        "recognizedText"
+        'recognizedText'
       ).textContent =
-        currentTranscript || "-";
+
+        text || '-';
 
 
-      if (currentTranscript) {
+      if (text) {
 
-        setState(
-          "listening",
-          "🎙️ 인식 중...",
-          currentTranscript
+        setVoiceState(
+          'listening',
+          '🎙️ 인식 중...',
+          text
         );
 
       }
@@ -535,83 +873,52 @@ function initializeSpeechRecognition() {
     };
 
 
-  /* -------------------------------------------------------
-     SPEECH END
-  ------------------------------------------------------- */
-
-  recognition.onspeechend =
-    function() {
-
-      setState(
-        "listening",
-        "음성 입력 완료",
-        "인식 결과를 확인하고 있습니다."
-      );
-
-    };
-
-
-  /* -------------------------------------------------------
-     END
-  ------------------------------------------------------- */
-
   recognition.onend =
     function() {
 
-      listening = false;
+      listening =
+        false;
 
 
       const button =
+
         document.getElementById(
-          "micButton"
+          'micButton'
         );
 
 
       button.classList.remove(
-        "listening"
+        'listening'
       );
 
 
       button.textContent =
-        "🎤";
+        '🎤';
 
 
       const text =
 
         document.getElementById(
-          "query"
+          'query'
         ).value.trim();
 
 
       if (text) {
 
-        document.getElementById(
-          "recognizedText"
-        ).textContent =
-          text;
-
-
-        setState(
-          "success",
-          "✓ 음성 인식 완료",
-          "정상적으로 음성이 텍스트로 변환되었습니다."
-        );
-
-
-        document.getElementById(
-          "successBox"
-        ).classList.add(
-          "show"
+        setVoiceState(
+          'success',
+          '✓ 음성 인식 완료',
+          '정상적으로 음성이 텍스트로 변환되었습니다.'
         );
 
       }
 
       else {
 
-        setState(
-          "error",
-          "음성을 인식하지 못했습니다",
-          "마이크를 다시 누른 뒤 조금 더 가까이에서 말씀해주세요."
+        setVoiceState(
+          'error',
+          '음성을 인식하지 못했습니다',
+          '마이크를 다시 눌러 말씀해주세요.'
         );
 
       }
@@ -619,105 +926,61 @@ function initializeSpeechRecognition() {
     };
 
 
-  /* -------------------------------------------------------
-     ERROR
-  ------------------------------------------------------- */
-
   recognition.onerror =
     function(event) {
 
-      listening = false;
+      listening =
+        false;
 
 
       const button =
+
         document.getElementById(
-          "micButton"
+          'micButton'
         );
 
 
       button.classList.remove(
-        "listening"
+        'listening'
       );
 
 
       button.textContent =
-        "🎤";
+        '🎤';
 
 
       let message =
-        "음성 인식 중 오류가 발생했습니다.";
+
+        '음성 인식 오류: ' +
+        event.error;
 
 
       if (
         event.error ===
-        "not-allowed"
+        'not-allowed'
       ) {
 
         message =
-          "마이크 사용 권한이 차단되었습니다. 주소창의 사이트 권한에서 마이크를 허용해주세요.";
+          '마이크 권한이 차단되었습니다. 사이트의 마이크 권한을 허용해주세요.';
 
       }
 
 
-      else if (
+      if (
         event.error ===
-        "service-not-allowed"
+        'no-speech'
       ) {
 
         message =
-          "브라우저에서 음성 인식 서비스 사용이 차단되었습니다.";
+          '음성이 감지되지 않았습니다. 다시 말씀해주세요.';
 
       }
 
 
-      else if (
-        event.error ===
-        "no-speech"
-      ) {
-
-        message =
-          "음성이 감지되지 않았습니다. 다시 눌러 말씀해주세요.";
-
-      }
-
-
-      else if (
-        event.error ===
-        "audio-capture"
-      ) {
-
-        message =
-          "사용 가능한 마이크를 찾지 못했습니다.";
-
-      }
-
-
-      else if (
-        event.error ===
-        "network"
-      ) {
-
-        message =
-          "음성 인식 서비스와 연결하지 못했습니다.";
-
-      }
-
-
-      else if (
-        event.error ===
-        "aborted"
-      ) {
-
-        message =
-          "음성 입력을 중지했습니다.";
-
-      }
-
-
-      setState(
-        "error",
-        "음성 인식 오류",
-        message + " (" + event.error + ")"
+      setVoiceState(
+        'error',
+        '음성 인식 오류',
+        message
       );
 
     };
@@ -726,7 +989,7 @@ function initializeSpeechRecognition() {
 
 
 /* =========================================================
-   MIC BUTTON
+   MIC
 ========================================================= */
 
 function toggleVoice() {
@@ -734,7 +997,7 @@ function toggleVoice() {
   if (!recognition) {
 
     alert(
-      "현재 브라우저에서는 음성 인식을 사용할 수 없습니다."
+      '현재 브라우저에서는 음성 인식을 사용할 수 없습니다.'
     );
 
     return;
@@ -761,9 +1024,10 @@ function toggleVoice() {
 
     showVoicePanel();
 
-    setState(
-      "error",
-      "마이크 시작 실패",
+
+    setVoiceState(
+      'error',
+      '마이크 시작 실패',
       error.message
     );
 
@@ -773,43 +1037,44 @@ function toggleVoice() {
 
 
 /* =========================================================
-   UI
+   VOICE UI
 ========================================================= */
 
 function showVoicePanel() {
 
   document.getElementById(
-    "voicePanel"
+    'voicePanel'
   ).classList.add(
-    "show"
+    'show'
   );
 
 }
 
 
-function setState(
+function setVoiceState(
   state,
   title,
   message
 ) {
 
   const dot =
+
     document.getElementById(
-      "stateDot"
+      'stateDot'
     );
 
 
   dot.className =
-    "dot";
+    'dot';
 
 
   if (
     state ===
-    "listening"
+    'listening'
   ) {
 
     dot.classList.add(
-      "listening"
+      'listening'
     );
 
   }
@@ -817,11 +1082,11 @@ function setState(
 
   else if (
     state ===
-    "success"
+    'success'
   ) {
 
     dot.classList.add(
-      "success"
+      'success'
     );
 
   }
@@ -829,24 +1094,24 @@ function setState(
 
   else if (
     state ===
-    "error"
+    'error'
   ) {
 
     dot.classList.add(
-      "error"
+      'error'
     );
 
   }
 
 
   document.getElementById(
-    "stateText"
+    'stateText'
   ).textContent =
     title;
 
 
   document.getElementById(
-    "voiceMessage"
+    'voiceMessage'
   ).textContent =
     message;
 

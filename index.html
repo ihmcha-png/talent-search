@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>내부 인재 검색 - 음성 테스트</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f6f8fb;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+      color: #172033;
+    }
+
+    .page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 50px 30px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .description {
+      color: #7b8799;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #e1e6ee;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.03);
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .help {
+      font-size: 12px;
+      color: #7d899a;
+      margin-bottom: 18px;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 56px;
+      gap: 10px;
+    }
+
+    #query {
+      height: 54px;
+      border: 1px solid #dce3ec;
+      border-radius: 10px;
+      padding: 0 16px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    #query:focus {
+      border-color: #2454db;
+    }
+
+    #micButton {
+      height: 54px;
+      border: 1px solid #cbd6e7;
+      border-radius: 10px;
+      background: #edf3ff;
+      cursor: pointer;
+      font-size: 22px;
+    }
+
+    #micButton:hover {
+      background: #e1eaff;
+    }
+
+    #micButton.listening {
+      background: #fff0f0;
+      border-color: #ef5350;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.08);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .voice-panel {
+      display: none;
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 12px;
+      background: #f7f9fc;
+      border: 1px solid #e2e7ef;
+    }
+
+    .voice-panel.show {
+      display: block;
+    }
+
+    .voice-state {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #9aa6b6;
+    }
+
+    .dot.listening {
+      background: #e5484d;
+      animation: dotPulse 1s infinite;
+    }
+
+    .dot.success {
+      background: #21a366;
+    }
+
+    .dot.error {
+      background: #e5484d;
+    }
+
+    @keyframes dotPulse {
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .25;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    #voiceMessage {
+      margin-top: 9px;
+      color: #6f7e92;
+      font-size: 12px;
+    }
+
+    .recognized {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e1e6ed;
+    }
+
+    .recognized-label {
+      color: #8a96a8;
+      font-size: 11px;
+      margin-bottom: 7px;
+    }
+
+    #recognizedText {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .result {
+      display: none;
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 10px;
+      background: #eef8f2;
+      border: 1px solid #cce8d7;
+    }
+
+    .result.show {
+      display: block;
+    }
+
+    .result-title {
+      font-weight: 800;
+      color: #18794e;
+      margin-bottom: 6px;
+    }
+
+    .result-text {
+      font-size: 13px;
+      color: #4d6358;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="page">
+
+    <h1>내부 인재 검색</h1>
+
+    <div class="description">
+      음성 검색 기능 연결 테스트
+    </div>
+
+    <div class="card">
+
+      <div class="title">
+        자동 검색
+      </div>
+
+      <div class="help">
+        마이크를 누르고 검색 조건을 말씀해주세요.
+      </div>
+
+      <div class="search-row">
+
+        <input
+          id="query"
+          type="text"
+          placeholder="예: 재직 중이고 총 경력 5년 이상이며 간호사 자격이 있는 사람"
+        >
+
+        <button
+          id="micButton"
+          type="button"
+          onclick="toggleVoice()"
+          title="음성 검색"
+        >
+          🎤
+        </button>
+
+      </div>
+
+      <div
+        id="voicePanel"
+        class="voice-panel"
+      >
+
+        <div class="voice-state">
+
+          <div
+            id="stateDot"
+            class="dot"
+          ></div>
+
+          <span id="stateText">
+            준비
+          </span>
+
+        </div>
+
+        <div id="voiceMessage">
+        </div>
+
+        <div class="recognized">
+
+          <div class="recognized-label">
+            인식된 음성
+          </div>
+
+          <div id="recognizedText">
+            -
+          </div>
+
+        </div>
+
+      </div>
+
+      <div
+        id="successBox"
+        class="result"
+      >
+
+        <div class="result-title">
+          ✓ 음성 인식 성공
+        </div>
+
+        <div class="result-text">
+          GitHub Pages에서 마이크와 음성 인식이 정상적으로 작동합니다.
+          다음 단계에서 이 결과를 실제 인재검색에 연결합니다.
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+<script>
+
+let recognition = null;
+let listening = false;
+
+let finalTranscript = "";
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+window.addEventListener(
+  "load",
+  initializeSpeechRecognition
+);
+
+
+function initializeSpeechRecognition() {
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+  if (!SpeechRecognition) {
+
+    showVoicePanel();
+
+    setState(
+      "error",
+      "음성 인식 미지원",
+      "현재 브라우저에서 Speech Recognition 기능을 사용할 수 없습니다."
+    );
+
+    document.getElementById(
+      "micButton"
+    ).disabled = true;
+
+    return;
+  }
+
+
+  recognition =
+    new SpeechRecognition();
+
+
+  recognition.lang =
+    "ko-KR";
+
+
+  recognition.continuous =
+    false;
+
+
+  recognition.interimResults =
+    true;
+
+
+  recognition.maxAlternatives =
+    1;
+
+
+  /* -------------------------------------------------------
+     START
+  ------------------------------------------------------- */
+
+  recognition.onstart =
+    function() {
+
+      listening = true;
+
+      finalTranscript = "";
+
+      document.getElementById(
+        "query"
+      ).value = "";
+
+
+      document.getElementById(
+        "recognizedText"
+      ).textContent = "-";
+
+
+      document.getElementById(
+        "successBox"
+      ).classList.remove(
+        "show"
+      );
+
+
+      const button =
+        document.getElementById(
+          "micButton"
+        );
+
+
+      button.classList.add(
+        "listening"
+      );
+
+
+      button.textContent =
+        "⏹️";
+
+
+      showVoicePanel();
+
+
+      setState(
+        "listening",
+        "🔴 듣는 중...",
+        "검색 조건을 말씀해주세요."
+      );
+
+    };
+
+
+  /* -------------------------------------------------------
+     SOUND DETECTED
+  ------------------------------------------------------- */
+
+  recognition.onsoundstart =
+    function() {
+
+      setState(
+        "listening",
+        "🔴 소리 감지",
+        "음성이 들어오고 있습니다."
+      );
+
+  };
+
+
+  /* -------------------------------------------------------
+     SPEECH DETECTED
+  ------------------------------------------------------- */
+
+  recognition.onspeechstart =
+    function() {
+
+      setState(
+        "listening",
+        "🎙️ 음성 인식 중...",
+        "계속 말씀해주세요."
+      );
+
+  };
+
+
+  /* -------------------------------------------------------
+     RESULT
+  ------------------------------------------------------- */
+
+  recognition.onresult =
+    function(event) {
+
+      let interimTranscript = "";
+
+
+      for (
+        let i = event.resultIndex;
+        i < event.results.length;
+        i++
+      ) {
+
+        const transcript =
+          event.results[i][0]
+            .transcript;
+
+
+        if (
+          event.results[i].isFinal
+        ) {
+
+          finalTranscript +=
+            transcript;
+
+        }
+
+        else {
+
+          interimTranscript +=
+            transcript;
+
+        }
+
+      }
+
+
+      const currentTranscript =
+
+        (
+          finalTranscript +
+          interimTranscript
+        ).trim();
+
+
+      document.getElementById(
+        "query"
+      ).value =
+        currentTranscript;
+
+
+      document.getElementById(
+        "recognizedText"
+      ).textContent =
+        currentTranscript || "-";
+
+
+      if (currentTranscript) {
+
+        setState(
+          "listening",
+          "🎙️ 인식 중...",
+          currentTranscript
+        );
+
+      }
+
+    };
+
+
+  /* -------------------------------------------------------
+     SPEECH END
+  ------------------------------------------------------- */
+
+  recognition.onspeechend =
+    function() {
+
+      setState(
+        "listening",
+        "음성 입력 완료",
+        "인식 결과를 확인하고 있습니다."
+      );
+
+    };
+
+
+  /* -------------------------------------------------------
+     END
+  ------------------------------------------------------- */
+
+  recognition.onend =
+    function() {
+
+      listening = false;
+
+
+      const button =
+        document.getElementById(
+          "micButton"
+        );
+
+
+      button.classList.remove(
+        "listening"
+      );
+
+
+      button.textContent =
+        "🎤";
+
+
+      const text =
+
+        document.getElementById(
+          "query"
+        ).value.trim();
+
+
+      if (text) {
+
+        document.getElementById(
+          "recognizedText"
+        ).textContent =
+          text;
+
+
+        setState(
+          "success",
+          "✓ 음성 인식 완료",
+          "정상적으로 음성이 텍스트로 변환되었습니다."
+        );
+
+
+        document.getElementById(
+          "successBox"
+        ).classList.add(
+          "show"
+        );
+
+      }
+
+      else {
+
+        setState(
+          "error",
+          "음성을 인식하지 못했습니다",
+          "마이크를 다시 누른 뒤 조금 더 가까이에서 말씀해주세요."
+        );
+
+      }
+
+    };
+
+
+  /* -------------------------------------------------------
+     ERROR
+  ------------------------------------------------------- */
+
+  recognition.onerror =
+    function(event) {
+
+      listening = false;
+
+
+      const button =
+        document.getElementById(
+          "micButton"
+        );
+
+
+      button.classList.remove(
+        "listening"
+      );
+
+
+      button.textContent =
+        "🎤";
+
+
+      let message =
+        "음성 인식 중 오류가 발생했습니다.";
+
+
+      if (
+        event.error ===
+        "not-allowed"
+      ) {
+
+        message =
+          "마이크 사용 권한이 차단되었습니다. 주소창의 사이트 권한에서 마이크를 허용해주세요.";
+
+      }
+
+
+      else if (
+        event.error ===
+        "service-not-allowed"
+      ) {
+
+        message =
+          "브라우저에서 음성 인식 서비스 사용이 차단되었습니다.";
+
+      }
+
+
+      else if (
+        event.error ===
+        "no-speech"
+      ) {
+
+        message =
+          "음성이 감지되지 않았습니다. 다시 눌러 말씀해주세요.";
+
+      }
+
+
+      else if (
+        event.error ===
+        "audio-capture"
+      ) {
+
+        message =
+          "사용 가능한 마이크를 찾지 못했습니다.";
+
+      }
+
+
+      else if (
+        event.error ===
+        "network"
+      ) {
+
+        message =
+          "음성 인식 서비스와 연결하지 못했습니다.";
+
+      }
+
+
+      else if (
+        event.error ===
+        "aborted"
+      ) {
+
+        message =
+          "음성 입력을 중지했습니다.";
+
+      }
+
+
+      setState(
+        "error",
+        "음성 인식 오류",
+        message + " (" + event.error + ")"
+      );
+
+    };
+
+}
+
+
+/* =========================================================
+   MIC BUTTON
+========================================================= */
+
+function toggleVoice() {
+
+  if (!recognition) {
+
+    alert(
+      "현재 브라우저에서는 음성 인식을 사용할 수 없습니다."
+    );
+
+    return;
+
+  }
+
+
+  if (listening) {
+
+    recognition.stop();
+
+    return;
+
+  }
+
+
+  try {
+
+    recognition.start();
+
+  }
+
+  catch (error) {
+
+    showVoicePanel();
+
+    setState(
+      "error",
+      "마이크 시작 실패",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   UI
+========================================================= */
+
+function showVoicePanel() {
+
+  document.getElementById(
+    "voicePanel"
+  ).classList.add(
+    "show"
+  );
+
+}
+
+
+function setState(
+  state,
+  title,
+  message
+) {
+
+  const dot =
+    document.getElementById(
+      "stateDot"
+    );
+
+
+  dot.className =
+    "dot";
+
+
+  if (
+    state ===
+    "listening"
+  ) {
+
+    dot.classList.add(
+      "listening"
+    );
+
+  }
+
+
+  else if (
+    state ===
+    "success"
+  ) {
+
+    dot.classList.add(
+      "success"
+    );
+
+  }
+
+
+  else if (
+    state ===
+    "error"
+  ) {
+
+    dot.classList.add(
+      "error"
+    );
+
+  }
+
+
+  document.getElementById(
+    "stateText"
+  ).textContent =
+    title;
+
+
+  document.getElementById(
+    "voiceMessage"
+  ).textContent =
+    message;
+
+}
+
+</script>
+
+</body>
+</html>
